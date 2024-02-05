@@ -1,0 +1,157 @@
+#import tkinter 
+from tkinter import *
+import mysql.connector
+from mysql.connector import Error
+
+# initDB - opretter tabel
+def initDB():
+     
+    """ Connect to MySQL database """
+    conn = None
+    try:
+        conn = mysql.connector.connect(host='localhost',
+                                       database='kathrr',
+                                       user='kathrr',
+                                       password='1234')
+     
+        if conn.is_connected():
+            print('Connected to MySQL database')
+            myCursor = conn.cursor()
+            myCursor.execute("create table if not exists users(id int primary key auto_increment, name varchar(255), password varchar(255) )")
+           
+          
+    except Error as e:
+        print("fejl")
+        print(e)
+
+    finally:
+       if conn is not None and conn.is_connected():
+           conn.close()
+
+
+
+# create - opretter bruger  
+def create():
+    
+    global usernm, passwd
+    username = usernm.get()
+    password = passwd.get()
+    print("create")
+    print(username)
+    """ Connect to MySQL database """
+    conn = None
+    try:
+        conn = mysql.connector.connect(host='localhost',
+                                       database='kathrr',
+                                       user='kathrr',
+                                       password='1234')
+     
+        if conn.is_connected():
+            print('Connected to MySQL database')
+            myCursor = conn.cursor()
+            
+            myCursor.execute("SELECT * FROM users WHERE name = %s",(username,))
+            result = myCursor.fetchall()
+            print(result)
+            print(usernm)
+            if result:
+                L3.config(text="Navnet er allerede i brug. Skriv et andet navn")
+            else:
+                print("Navnet er ikke i brug")
+                myCursor.execute("insert into users(name, password) values(%s, %s)", (username, password))  
+                L3.config(text="Brugeren er oprettet")  
+                conn.commit()
+    except Error as e:
+        print("fejl")
+        print(e)
+
+    finally:
+       if conn is not None and conn.is_connected():
+           conn.close()
+
+def login():
+    global usernm, passwd
+    username = usernm.get()
+    password = passwd.get()
+    print("login")
+   
+    """ Connect to MySQL database """
+    conn = None
+    try:
+        conn = mysql.connector.connect(host='localhost',
+                                       database='kathrr',
+                                       user='kathrr',
+                                       password='1234')
+     
+        if conn.is_connected():
+            print('Connected to MySQL database')
+            myCursor = conn.cursor()
+            
+            myCursor.execute("SELECT password FROM users WHERE name = %s",(username,))
+            result = myCursor.fetchall()
+            print(result)
+            if result:
+                result = result[0][0]
+                if result == password:
+                    print("Brugeren findes og password er korrekt")
+                    L3.config(text="Du er logget ind")
+                else:
+                    L3.config(text="Password er forkert")
+                print(result)
+            else:
+                print("Brugeren findes ikke")
+                L3.config(text="Brugeren findes ikke")
+    
+    except Error as e:
+        print("fejl")
+        print(e)
+
+    finally:
+       if conn is not None and conn.is_connected():
+           conn.close()
+
+
+
+
+def initTkinter():
+    global usernm, passwd, L3
+    #usernm.delete(0, END)
+    #passwd.delete(0, END)
+    #L3.config(text="")
+    print("init")   
+
+ 
+    root = Tk() 
+    root.geometry("600x300")  
+    L1 = Label(root, text="User Name") 
+    L1.grid(row=0,column=0) 
+    L2 = Label(root, text="Password") 
+    L2.grid(row=1,column=0) 
+  
+
+  
+    usernm = Entry()
+    usernm.grid(row=0,column=1, 
+                      padx=10,pady=10) 
+    passwd = Entry()
+    passwd.grid(row=1,column=1, 
+                      padx=10,pady=10) 
+    print("username: ", usernm)
+
+    # Create a Button
+    btn = Button(root, text = 'Opret', bd = '5',
+                          command = create).grid(row=3, column=1) 
+    btn1 = Button(root, text = 'login', bd = '5',
+                          command = login).grid(row=3, column = 2) 
+
+    L3 = Label(root, text="") 
+    L3.grid(row=4,column=1)
+ 
+# Set the position of button on the top of window.   
+#btn.pack(side = 'bottom')   
+
+
+initDB()
+initTkinter()
+
+mainloop() 
